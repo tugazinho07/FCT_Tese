@@ -1,0 +1,179 @@
+# METAGENOMIC BINNING WORKFLOW
+
+Este documento descreve o workflow utilizado para processamento de contigs, concatenação de FASTA, mapping e binning metagenómico com diferentes ferramentas.
+
+---
+
+1. COPIAR CONTIGS
+
+---
+
+cp /home/ga.soares/MegaHit/megahit_resultAA/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_resultB/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_resultC/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_result_3A/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_result_3B/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_result_3C/final.contigs.fa 
+/home/ga.soares/fastas2/
+
+---
+
+2. CONCATENAR FASTA
+
+---
+
+cat /home/ga.soares/fastas2/SRR17227790.prefixed.fa 
+/home/ga.soares/fastas2/SRR17227800.prefixed.fa 
+/home/ga.soares/fastas2/SRR17227794.prefixed.fa 
+/home/ga.soares/fastas2/SRR17227787.prefixed.fa 
+/home/ga.soares/fastas2/SRR17227793.prefixed.fa 
+/home/ga.soares/fastas2/SRR17227797.prefixed.fa 
+> /home/ga.soares/fastas2/concatenated_multisample2.fa
+
+---
+
+3. MAPPING (BOWTIE2 + SAMTOOLS)
+
+---
+
+bowtie2 -x /home/ga.soares/fastas2Mul/multisample_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227793_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227793_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 
+-o /home/ga.soares/fastas2Mul/SRR17227793.multi.sorted.bam
+
+---
+
+4. SEMIBIN2
+
+---
+
+4.1 Concatenação de FASTA:
+
+SemiBin2 concatenate_fasta 
+-i /home/ga.soares/MegaHit/megahit_resultAA/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_resultB/final.contigs.fa 
+/home/ga.soares/MegaHit/megahit_resultC/final.contigs.fa 
+-o concatenated_multisample.fa
+
+Alternativa:
+
+SemiBin2 concatenate_fasta -i contig*.fa -o output
+
+4.2 Binning multisample:
+
+SemiBin2 multi_easy_bin 
+-i /home/ga.soares/fastas/concatenated_multisample.fa 
+-b /home/ga.soares/fastas/SRR17227790.multi.sorted.bam 
+/home/ga.soares/fastas/SRR17227800.multi.sorted.bam 
+/home/ga.soares/fastas/SRR17227794.multi.sorted.bam 
+-o output-mul
+
+4.3 Submissão de job:
+
+oarsub -l "{cluster='charmander'}/nodes=1,walltime=12:30:00" 
+-O /home/ga.soares/semibin2_multi.out 
+-E /home/ga.soares/semibin2_multi.err 
+/home/ga.soares/semibinMul.oar
+
+---
+
+5. METABAT2
+
+---
+
+5.1 Gerar profundidade:
+
+/home/ga.soares/metabat/build/src/jgi_summarize_bam_contig_depths 
+--outputDepth depthMUL2.txt 
+/home/ga.soares/fastas2/SRR17227787.multi.sorted.bam 
+/home/ga.soares/fastas2/SRR17227790.multi.sorted.bam 
+/home/ga.soares/fastas2/SRR17227793.multi.sorted.bam 
+/home/ga.soares/fastas2/SRR17227794.multi.sorted.bam 
+/home/ga.soares/fastas2/SRR17227797.multi.sorted.bam 
+/home/ga.soares/fastas2/SRR17227800.multi.sorted.bam
+
+5.2 Executar MetaBAT2:
+
+./metabat2 
+-i /home/ga.soares/fastas2/concatenated_multisample2.fa 
+-a /home/ga.soares/metabat/build/src/depthMUL2.txt 
+-o binsMUL2_dir/bin
+
+5.3 Avaliação com CheckM2:
+
+checkm2 predict 
+--threads 30 
+--input /home/ga.soares/metabat/build/src/binsMUL2_dir/bin.*.fa 
+--output-directory /home/ga.soares/metabat/build/src/binsMUL2_dir/checkm2/
+
+---
+
+6. COMEBIN
+
+---
+
+run_comebin.sh 
+-a /home/ga.soares/fastas/concatenated_multisample.fa 
+-o /home/ga.soares/ 
+-p /home/ga.soares/bam_file/ 
+-t 32
+
+---
+
+7. METABINNER
+
+---
+
+7.1 Coverage a partir de FASTQ:
+
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh 
+-a /home/ga.soares/fastas/concatenated_multisample.fa 
+-o /home/ga.soares/CheeseMUL_CoveregePro 
+-t 32 
+/home/ga.soares/SRA_Tool/SRR17227790_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227790_2.fastq 
+/home/ga.soares/SRA_Tool/SRR17227794_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227794_2.fastq 
+/home/ga.soares/SRA_Tool/SRR17227800_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227800_2.fastq
+
+7.2 Coverage a partir de BAM:
+
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh 
+-a /home/ga.soares/fastas/concatenated_multisample.fa 
+-o /home/ga.soares/CheeseMUL_CoveregePro 
+-t 32 
+/home/ga.soares/bamsMULTI/SRR17227790.multi.sorted.bam 
+/home/ga.soares/bamsMULTI/SRR17227800.multi.sorted.bam 
+/home/ga.soares/bamsMULTI/SRR17227794.multi.sorted.bam
+
+7.3 Submissão de job:
+
+oarsub -l "{cluster='charmander'}/nodes=1,walltime=12:30:00" 
+-O /home/ga.soares/CheeseMUL_CoveregePro/metabinner_cov_multi.out 
+-E /home/ga.soares/CheeseMUL_CoveregePro/metabinner_cov_multi.err 
+/home/ga.soares/metabinner_cov_multi.oar
+
+---
+
+8. CHECKM2 (FINAL)
+
+---
+
+checkm2 predict 
+--threads 24 
+--input /home/ga.soares/output-mul2/bins/**SemiBin**.fa.gz 
+--output-directory /home/ga.soares/output-mul2/checkm2/
+
+---
+
+## NOTAS
+
+* Uniformizar caminhos (fastas, fastas2, fastas2Mul, etc.)
+* Considerar uso de variáveis para maior portabilidade
+* Garantir consistência nos nomes dos ficheiros (ex: depthMUL2.txt)
+
+---

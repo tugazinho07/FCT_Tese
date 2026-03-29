@@ -1,0 +1,162 @@
+# SINGLE-SAMPLE WORKFLOW (INITIAL VERSION)
+
+Este documento descreve os primeiros testes realizados para assembly, mapping e binning em amostras individuais.
+
+---
+
+1. DOWNLOAD E CONVERSÃO DE DADOS (SRA → FASTQ)
+
+---
+
+fastq-dump --split-files SRR17227790
+
+---
+
+2. ASSEMBLY (MEGAHIT - SINGLE SAMPLE)
+
+---
+
+megahit/bin/megahit 
+-1 SRR17227790_1.fastq 
+-2 SRR17227790_2.fastq 
+-o megahit_result_A
+
+megahit/bin/megahit 
+-1 SRR17227800_1.fastq 
+-2 SRR17227800_2.fastq 
+-o megahit_result_B
+
+megahit/bin/megahit 
+-1 SRR17227794_1.fastq 
+-2 SRR17227794_2.fastq 
+-o megahit_result_C
+
+---
+
+3. MAPPING (BOWTIE2 + SAMTOOLS)
+
+---
+
+3.1 Criar índice:
+
+bowtie2-build 
+/home/ga.soares/MegaHit/megahit_result_A/final.contigs.fa 
+/home/ga.soares/contigs_index
+
+3.2 Mapping:
+
+bowtie2 -x /home/ga.soares/contigs_index 
+-1 /home/ga.soares/SRA_Tool/SRR17227790_1.fastq 
+-2 /home/ga.soares/SRA_Tool/SRR17227790_2.fastq 
+--threads 8 
+-S alignment.sam
+
+3.3 Converter e ordenar:
+
+samtools view -bS alignment.sam > alignment.bam
+samtools sort alignment.bam -o alignment_sorted.bam
+samtools index alignment_sorted.bam
+
+---
+
+4. SEMIBIN2
+
+---
+
+4.1 Single-sample binning:
+
+SemiBin2 single_easy_bin 
+-i /home/ga.soares/MegaHit/megahit_result_A/final.contigs.fa 
+-b /home/ga.soares/alignment_sorted.bam 
+-o output 
+--environment global
+
+4.2 Multi-sample (teste):
+
+SemiBin2 multi_easy_bin 
+-i contig_whole.fa 
+-b *.sorted.bam 
+-o output
+
+---
+
+5. METABAT2
+
+---
+
+5.1 Gerar ficheiro de profundidade:
+
+/home/ga.soares/metabat/build/src/jgi_summarize_bam_contig_depths 
+--outputDepth depth.txt 
+/home/ga.soares/alignment_sorted.bam
+
+5.2 Executar MetaBAT2:
+
+./metabat2 
+-i /home/ga.soares/MegaHit/megahit_result_A/final.contigs.fa 
+-a /home/ga.soares/metabat/build/src/depth.txt 
+-o bins_dir/bin
+
+---
+
+6. COMEBIN
+
+---
+
+run_comebin.sh 
+-a /home/ga.soares/MegaHit/megahit_result_B/final.contigs.fa 
+-o /home/ga.soares/ 
+-p /home/ga.soares/bam_files/ 
+-t 32
+
+---
+
+7. METABINNER
+
+---
+
+7.1 Gerar coverage:
+
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh 
+-a /home/ga.soares/MegaHit/megahit_result_C/final.contigs.fa 
+-o /home/ga.soares/CheeseC_CoveregePro 
+-t 32 
+/home/ga.soares/SRA_Tool/SRR17227794_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227794_2.fastq
+
+7.2 Gerar perfil de k-mers:
+
+python gen_kmer.py 
+/home/ga.soares/MegaHit/megahit_result_C/final.contigs.fa 
+1000 4
+
+7.3 Executar MetaBinner:
+
+bash run_metabinner.sh 
+-a /home/ga.soares/MegaHit/megahit_result_C/final.contigs.fa 
+-o /home/ga.soares/CheeseC_CoveregePro/metabinner_res 
+-d /home/ga.soares/CheeseC_CoveregePro/coverage_profile_f1k.tsv 
+-k /home/ga.soares/MegaHit/megahit_result_C/final.contigs_kmer_4_f1000.csv 
+-p /home/ga.soares/ENTER/envs/metabinner/bin
+
+---
+
+8. AVALIAÇÃO (CHECKM2)
+
+---
+
+checkm2 predict 
+--threads 30 
+--input /home/ga.soares/output7/output_bins/SemiBin_*.fa.gz 
+--output-directory /home/ga.soares/output7/checkm2/
+
+---
+
+## NOTAS
+
+* Workflow inicial para testes com amostras individuais
+* Posteriormente expandido para multi-sample e co-assembly
+* Validar qualidade dos bins (completeness/contamination)
+* Comparar resultados entre diferentes ferramentas de binning
+
+---

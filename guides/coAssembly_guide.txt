@@ -1,0 +1,168 @@
+# CO-ASSEMBLY BINNING WORKFLOW
+
+Este documento descreve o workflow de co-assembly, mapping e binning metagenómico utilizando diferentes ferramentas.
+
+---
+
+1. ASSEMBLY (MEGAHIT CO-ASSEMBLY)
+
+---
+
+megahit/bin/megahit 
+-1 SRR17227790_1.fastq,SRR17227800_1.fastq,SRR17227794_1.fastq,SRR17227793_1.fastq,SRR17227787_1.fastq,SRR17227797_1.fastq 
+-2 SRR17227790_2.fastq,SRR17227800_2.fastq,SRR17227794_2.fastq,SRR17227793_2.fastq,SRR17227787_2.fastq,SRR17227797_2.fastq 
+-o megahit_coassembly2_result
+
+---
+
+2. BOWTIE2 (INDEX + MAPPING)
+
+---
+
+2.1 Criar o índice:
+
+bowtie2-build 
+/home/ga.soares/MegaHit/megahit_coassembly2_result/final.contigs.fa 
+/home/ga.soares/MegaHit/coassembly_bt2_index
+
+2.2 Mapping por amostra:
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227790_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227790_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227790.co.sorted.bam
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227800_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227800_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227800.co.sorted.bam
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227794_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227794_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227794.co.sorted.bam
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227787_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227787_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227787.co.sorted.bam
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227793_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227793_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227793.co.sorted.bam
+
+bowtie2 -x /home/ga.soares/fastasCo/coassembly_bt2_index 
+-1 /home/ga.soares/MegaHit/SRR17227797_1.fastq 
+-2 /home/ga.soares/MegaHit/SRR17227797_2.fastq 
+-p 32 | 
+samtools view -bS - | 
+samtools sort -@ 32 -o SRR17227797.co.sorted.bam
+
+---
+
+3. METABAT2
+
+---
+
+3.1 Gerar ficheiro de profundidade:
+
+/home/ga.soares/metabat/build/src/jgi_summarize_bam_contig_depths 
+--outputDepth depthCO2.txt 
+/home/ga.soares/fastasCo/SRR17227787.co.sorted.bam 
+/home/ga.soares/fastasCo/SRR17227790.co.sorted.bam 
+/home/ga.soares/fastasCo/SRR17227793.co.sorted.bam 
+/home/ga.soares/fastasCo/SRR17227794.co.sorted.bam 
+/home/ga.soares/fastasCo/SRR17227797.co.sorted.bam 
+/home/ga.soares/fastasCo/SRR17227800.co.sorted.bam
+
+3.2 Executar MetaBAT2:
+
+./metabat2 
+-i /home/ga.soares/MegaHit/megahit_coassembly2_result/final.contigs.fa 
+-a /home/ga.soares/metabat/build/src/depthCO2.txt 
+-o binsCO2_dir/bin
+
+---
+
+4. SEMIBIN2
+
+---
+
+SemiBin2 single_easy_bin 
+-i /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa 
+-b SRR17227790.co.sorted.bam SRR17227800.co.sorted.bam SRR17227794.co.sorted.bam 
+-o output-co2
+
+---
+
+5. COMEBIN (A IMPLEMENTAR)
+
+---
+
+run_comebin.sh 
+-a /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa 
+-o /home/ga.soares/ 
+-p /home/ga.soares/bam_files/ 
+-t 32
+
+---
+
+6. METABINNER
+
+---
+
+6.1 Gerar coverage (FASTQ):
+
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh 
+-a /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa 
+-o /home/ga.soares/CheeseCo-o_CoveregePro 
+-t 32 
+/home/ga.soares/SRA_Tool/SRR17227790_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227790_2.fastq 
+/home/ga.soares/SRA_Tool/SRR17227794_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227794_2.fastq 
+/home/ga.soares/SRA_Tool/SRR17227800_1.fastq 
+/home/ga.soares/SRA_Tool/SRR17227800_2.fastq
+
+6.2 Executar MetaBinner:
+
+bash run_metabinner.sh 
+-a /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa 
+-o /home/ga.soares/CheeseCo-o_CoveregePro/metabinner_res 
+-d /home/ga.soares/CheeseCo-o_CoveregePro/coverage_profile_f1k.tsv 
+-k /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs_kmer_4_f1000.csv 
+-p /home/ga.soares/ENTER/envs/metabinner/bin
+
+---
+
+7. AVALIAÇÃO (CHECKM2)
+
+---
+
+checkm2 predict 
+--threads 24 
+--input /home/ga.soares/output-6co/output_bins/**SemiBin**.fa.gz 
+--output-directory /home/ga.soares/output-6co/output_bins/checkm2/
+
+---
+
+## NOTAS
+
+* Garantir consistência nos caminhos (fastasCo, MegaHit, etc.)
+* Confirmar diferença entre:
+  megahit_coassembly_result vs megahit_coassembly2_result
+* Remover ficheiros intermédios desnecessários antes de commit
+* Considerar uso de variáveis para facilitar reutilização
+
+---
