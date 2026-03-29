@@ -157,12 +157,5 @@ checkm2 predict
 
 ---
 
-## NOTAS
-
-* Garantir consistência nos caminhos (fastasCo, MegaHit, etc.)
-* Confirmar diferença entre:
-  megahit_coassembly_result vs megahit_coassembly2_result
-* Remover ficheiros intermédios desnecessários antes de commit
-* Considerar uso de variáveis para facilitar reutilização
 
 ---
