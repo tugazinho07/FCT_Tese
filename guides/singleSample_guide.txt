@@ -154,9 +154,4 @@ checkm2 predict
 
 ## NOTAS
 
-* Workflow inicial para testes com amostras individuais
-* Posteriormente expandido para multi-sample e co-assembly
-* Validar qualidade dos bins (completeness/contamination)
-* Comparar resultados entre diferentes ferramentas de binning
-
 ---
