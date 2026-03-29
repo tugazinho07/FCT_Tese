@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD: $(pwd)"
+
+# Inicializar conda (robusto em batch)
+eval "$(/home/ga.soares/ENTER/condabin/conda shell.bash hook)"
+
+# Ativar ambiente
+conda activate metabinner
+
+# Paths
+FA="/home/ga.soares/fastas/concatenated_multisample.fa"
+OUT="/home/ga.soares/CheeseMUL_CoveregePro"
+BAM1="/home/ga.soares/bamsMULTI/SRR17227790.multi.sorted.bam"
+BAM2="/home/ga.soares/bamsMULTI/SRR17227800.multi.sorted.bam"
+BAM3="/home/ga.soares/bamsMULTI/SRR17227794.multi.sorted.bam"
+
+# Checks (falha cedo com erro claro)
+ls -lh "$FA"
+ls -lh "$BAM1" "$BAM2" "$BAM3"
+
+# Criar output
+mkdir -p "$OUT"
+
+# Run
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh \
+  -a "$FA" \
+  -o "$OUT" \
+  -t 32 \
+  "$BAM1" \
+  "$BAM2" \
+  "$BAM3"
+
+echo "END: $(date)"

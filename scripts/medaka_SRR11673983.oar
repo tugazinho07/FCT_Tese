@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD: $(pwd)"
+
+# Inicializar conda
+eval "$(/home/ga.soares/ENTER/condabin/conda shell.bash hook)"
+conda activate medaka
+
+# Paths
+READS="/home/ga.soares/SRA_Tool/sludgeFasq/SRR11673983.fastq"
+DRAFT="/home/ga.soares/flyeRes/flye_meta_SRR11673983/fastaPol/assembly.racon3.fasta"
+OUTDIR="/home/ga.soares/flyeRes/flye_meta_SRR11673983/medaka2"
+
+# Checks básicos
+ls -lh "$READS"
+ls -lh "$DRAFT"
+
+# Criar output (não falha se já existir)
+mkdir -p "$OUTDIR"
+
+# Correr Medaka
+medaka_consensus \
+  -i "$READS" \
+  -d "$DRAFT" \
+  -o "$OUTDIR" \
+  -t 64 \
+  -m r941_min_sup_g507
+
+echo "END: $(date)"

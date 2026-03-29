@@ -1,0 +1,22 @@
+#!/bin/bash
+#================ OAR OPTIONS =================#
+#OAR -p "cluster='charmander'"
+#OAR -l nodes=1/core=32,walltime=12:30:00
+#OAR -n metabinner_coverage
+#OAR -O /home/ga.soares/CheeseCo-o_CoveregePro/metabinner.out
+#OAR -E /home/ga.soares/CheeseCo-o_CoveregePro/metabinner.err
+#================================================#
+
+# ---- Inicializar conda ----
+conda activate metabinner
+
+bash /home/ga.soares/ENTER/envs/metabinner/bin/scripts/gen_coverage_file.sh \
+  -a /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa \
+  -o /home/ga.soares/CheeseCo-o_CoveregePro \
+  -t 32 \
+  /home/ga.soares/SRA_Tool/SRR17227790_1.fastq \
+  /home/ga.soares/SRA_Tool/SRR17227790_2.fastq \
+  /home/ga.soares/SRA_Tool/SRR17227794_1.fastq \
+  /home/ga.soares/SRA_Tool/SRR17227794_2.fastq \
+  /home/ga.soares/SRA_Tool/SRR17227800_1.fastq \
+  /home/ga.soares/SRA_Tool/SRR17227800_2.fastq

@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD (before cd): $(pwd)"
+
+# Ir para o diretório onde está o SRA_Tool
+cd /home/ga.soares/SRA_Tool/sludgeFasq/
+
+echo "PWD (after cd): $(pwd)"
+
+# Executar fastq-dump
+/home/ga.soares/SRA_Tool/sratoolkit.3.2.1-alma_linux64/bin/fastq-dump \
+  SRR11673974 \
+  --threads 24
+
+echo "END: $(date)"

@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD: $(pwd)"
+
+# Inicializar conda (robusto em batch)
+eval "$(/home/ga.soares/ENTER/condabin/conda shell.bash hook)"
+
+# Ativar ambiente
+conda activate SemiBin
+
+# Paths
+FA="/home/ga.soares/fastas/concatenated_multisample.fa"
+BAM1="/home/ga.soares/fastas/SRR17227790.multi.sorted.bam"
+BAM2="/home/ga.soares/fastas/SRR17227800.multi.sorted.bam"
+BAM3="/home/ga.soares/fastas/SRR17227794.multi.sorted.bam"
+
+OUT="/home/ga.soares/output-mul"
+mkdir -p "$OUT"
+
+# Checks (se falhar aqui, já sabes logo porquê)
+ls -lh "$FA"
+ls -lh "$BAM1" "$BAM2" "$BAM3"
+which SemiBin2
+
+# Run
+SemiBin2 multi_easy_bin \
+  -i "$FA" \
+  -b "$BAM1" "$BAM2" "$BAM3" \
+  -o "$OUT"
+
+echo "END: $(date)"

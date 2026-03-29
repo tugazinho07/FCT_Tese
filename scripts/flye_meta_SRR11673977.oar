@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD: $(pwd)"
+
+# Inicializar conda
+eval "$(/home/ga.soares/ENTER/condabin/conda shell.bash hook)"
+
+# Ativar ambiente Flye
+conda activate flye
+
+# Inputs
+READS="/home/ga.soares/SRA_Tool/sludgeFasq/SRR11673977.fastq"
+OUTDIR="/home/ga.soares/flyeRes/flye_meta_SRR11673977"
+THREADS=32
+
+# Checks
+ls -lh "$READS"
+
+# Criar diretório de saída
+mkdir -p "$OUTDIR"
+
+# Run Flye (metagenome mode)
+flye --nano-raw "$READS" \
+     --meta \
+     --out-dir "$OUTDIR" \
+     --threads "$THREADS"
+
+echo "END: $(date)"

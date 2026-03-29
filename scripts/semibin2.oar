@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+
+# Inicializar conda (robusto em batch)
+eval "$(/home/ga.soares/ENTER/condabin/conda shell.bash hook)"
+conda activate SemiBin
+
+# Opcional: ir para uma pasta de trabalho
+cd /home/ga.soares
+
+# Criar output dir (boa prática)
+mkdir -p output-co2
+
+SemiBin2 single_easy_bin \
+  -i /home/ga.soares/MegaHit/megahit_coassembly_result/final.contigs.fa \
+  -b SRR17227790.co.sorted.bam SRR17227800.co.sorted.bam SRR17227794.co.sorted.bam \
+  -o output-co2

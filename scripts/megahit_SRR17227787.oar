@@ -1,0 +1,26 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "HOST: $(hostname)"
+echo "START: $(date)"
+echo "PWD (before cd): $(pwd)"
+
+# Ir para o diretório do MEGAHIT
+cd /home/ga.soares/MegaHit
+
+echo "PWD (after cd): $(pwd)"
+
+# Checks básicos
+ls -lh SRR17227793_1.fastq SRR17227793_2.fastq
+ls -ld megahit/bin/megahit
+
+# Criar output (se já existir, não falha)
+mkdir -p megahit_result_3A
+
+# Correr MEGAHIT
+megahit/bin/megahit \
+  -1 SRR17227787_1.fastq \
+  -2 SRR17227787_2.fastq \
+  -o megahit_result_3B
+
+echo "END: $(date)"
